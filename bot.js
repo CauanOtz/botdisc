@@ -229,6 +229,46 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
             }]
         });
 
+        // Mantém os botões originais para todos os usuários
+        await interaction.message.edit({
+            embeds: [{
+                color: 0x0099FF,
+                title: `🎮 ${actionData.name}`,
+                description: `
+📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
+
+👥 **Vagas:** ${actionData.participantes.length}/${actionData.vagas}
+🗡️ **Arma do baú:** ${actionData.quantidadeArmas > 0 ? `Sim (${actionData.quantidadeArmas} armas)` : 'Não'}
+
+**Participantes:**
+${participantesList}
+
+${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
+                footer: {
+                    text: 'Use os botões abaixo para participar ou se retirar da ação!'
+                }
+            }],
+            components: [new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`Participar_${actionId}`)
+                        .setLabel('✅ Participar')
+                        .setStyle(ButtonStyle.Success),
+                    new ButtonBuilder()
+                        .setCustomId(`Retirar_${actionId}`)
+                        .setLabel('❌ Se Retirar')
+                        .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                        .setCustomId(`Finalizar_${actionId}`)
+                        .setLabel('🏆 Finalizar')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId(`Cancelar_${actionId}`)
+                        .setLabel('🚫 Cancelar Ação')
+                        .setStyle(ButtonStyle.Danger)
+                )]
+        });
+
         // Responde ao usuário com uma mensagem ephemeral contendo os botões personalizados
         await interaction.reply({
             content: isUserInAction ? 'Você está participando desta ação!' : 'Você não está participando desta ação.',
