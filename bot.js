@@ -318,11 +318,11 @@ client.on('interactionCreate', async (interaction) => {
             color: status === 'vitoria' ? 0x00FF00 : 0xFF0000,
             title: '🎮 Resultado da Ação',
             fields: [
-                { name: '🎭 Ação', value: actionData.name, inline: true },
-                { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: true },
-                { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: true },
-                { name: '🗡️ Armas do Baú', value: armasInfo, inline: true },
-                { name: '👥 Participantes', value: participantes }
+                { name: '🎭 Ação', value: actionData.name, inline: false },
+                { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
+                { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: false },
+                { name: '🗡️ Armas do Baú', value: armasInfo, inline: false },
+                { name: '👥 Participantes', value: participantes, inline: false }
             ]
         }]
     });
@@ -330,7 +330,7 @@ client.on('interactionCreate', async (interaction) => {
     delete actions[actionId];
     await interaction.reply({
         content: 'Ação finalizada com sucesso!',
-        ephemeral: true 
+        ephemeral: true
     });
 });
 
