@@ -1,5 +1,15 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, MessageActionRow, MessageButton, MessageSelectMenu } = require('discord.js');
+const { 
+    Client, 
+    GatewayIntentBits, 
+    ActionRowBuilder, 
+    ButtonBuilder, 
+    ButtonStyle,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
+    SelectMenuBuilder
+} = require('discord.js');
 
 const client = new Client({
     intents: [
@@ -10,58 +20,118 @@ const client = new Client({
     ]
 });
 
-const actions = {}; //Armazenar as ações que estão ativas no momento
+const actions = {};
 
 client.on('ready', () => {
     console.log('Bot está funcionando autenticado e pronto para uso!');
 });
 
+// Comando para iniciar o painel
 client.on('messageCreate', async (message) => {
     if(message.channel.name !== 'iniciar-ação' || message.author.bot) return;
+    if(message.content !== '!iniciar') return;
 
-    if(message.content === '.') return;
-
-    const args = message.content.split('\n');
-    if(args.length < 3){
-        return message.reply('Formato inválido. Use: \n```Ação: NomeDaAção \nVagas: NúmeroDeVagas \nFoi pega arma do baú? (sim/não)```');
-    }
-
-    // Melhorando a extração dos valores
-    const actionLine = args[0].toLowerCase();
-    const vagasLine = args[1].toLowerCase();
-    const armaLine = args[2].toLowerCase();
-
-    if(!actionLine.startsWith('ação:') || !vagasLine.startsWith('vagas:') || !armaLine.includes('foi pega arma do baú')){
-        return message.reply('Formato inválido. Use: \n```Ação: NomeDaAção \nVagas: NúmeroDeVagas \nFoi pega arma do baú? (sim/não)```');
-    }
-
-    const actionName = args[0].split(':')[1].trim();
-    const vagas = parseInt(args[1].split(':')[1], 10);
-    const pegouArma = args[2].toLowerCase().includes('sim');
-
-    if(isNaN(vagas)) return message.reply('Número de vagas inválido. Use um número válido.');
-
-    const actionId = Date.now();
-    actions[actionId] = {
-        name: actionName,
-        vagas: vagas,
-        pegouArma: pegouArma,
-        participantes: [],
-        reservas: [],
-    };
-
-    const buttons = new MessageActionRow()
+    const button = new ActionRowBuilder()
         .addComponents(
-            new MessageButton().setCustomId(`Participar_${actionId}`).setLabel('✅ Participar').setStyle('SUCCESS'),
-            new MessageButton().setCustomId(`Cancelar_${actionId}`).setLabel('❌ Cancelar').setStyle('DANGER'),
+            new ButtonBuilder()
+                .setCustomId('criar_acao')
+                .setLabel('📝 Criar Nova Ação')
+                .setStyle(ButtonStyle.Primary)
         );
-    
+
     await message.channel.send({
-        content: `🎭 **Ação:** ${actionName}\n📅 **Data:** <t:${Math.floor(actionId / 1000)}:d>\n👥 **Vagas disponíveis:** ${vagas}\n🗡️ **Arma do baú:** ${pegouArma ? 'Sim' : 'Não'}`,
-        components: [buttons],
+        content: '### 🎮 Painel de Criação de Ações\nClique no botão abaixo para criar uma nova ação!',
+        components: [button]
     });
 });
 
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.isButton() && interaction.customId === 'criar_acao') {
+        const modal = new ModalBuilder()
+            .setCustomId('modal_acao')
+            .setTitle('Criar Nova Ação');
+
+        const nomeInput = new TextInputBuilder()
+            .setCustomId('nome_acao')
+            .setLabel('Nome da Ação')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Digite o nome da ação')
+            .setRequired(true);
+
+        const vagasInput = new TextInputBuilder()
+            .setCustomId('vagas_acao')
+            .setLabel('Número de Vagas')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Digite o número de vagas')
+            .setRequired(true);
+
+        const armaInput = new TextInputBuilder()
+            .setCustomId('arma_acao')
+            .setLabel('Foi pega arma do baú?')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Digite sim ou não')
+            .setRequired(true);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(nomeInput),
+            new ActionRowBuilder().addComponents(vagasInput),
+            new ActionRowBuilder().addComponents(armaInput)
+        );
+
+        await interaction.showModal(modal);
+    }
+});
+
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isModalSubmit()) return;
+
+    if (interaction.customId === 'modal_acao') {
+        const actionName = interaction.fields.getTextInputValue('nome_acao');
+        const vagas = parseInt(interaction.fields.getTextInputValue('vagas_acao'));
+        const pegouArma = interaction.fields.getTextInputValue('arma_acao').toLowerCase() === 'sim';
+
+        if(isNaN(vagas)) {
+            return interaction.reply({ content: 'Número de vagas inválido!', ephemeral: true });
+        }
+
+        const actionId = Date.now();
+        actions[actionId] = {
+            name: actionName,
+            vagas: vagas,
+            pegouArma: pegouArma,
+            participantes: [],
+            reservas: [],
+        };
+
+        const buttons = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`Participar_${actionId}`)
+                    .setLabel('✅ Participar')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`Cancelar_${actionId}`)
+                    .setLabel('❌ Cancelar')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        await interaction.reply({
+            embeds: [{
+                color: 0x0099FF,
+                title: '🎮 Nova Ação Criada',
+                fields: [
+                    { name: '🎭 Ação', value: actionName, inline: true },
+                    { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: true },
+                    { name: '👥 Vagas', value: `${vagas}`, inline: true },
+                    { name: '🗡️ Arma do baú', value: pegouArma ? 'Sim' : 'Não', inline: true }
+                ]
+            }],
+            components: [buttons]
+        });
+    }
+});
+
+// Mantendo o resto do código de participação e cancelamento igual
 client.on('interactionCreate', async (interaction) => {
     if(!interaction.isButton()) return;
 
@@ -85,10 +155,9 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if(action === 'Cancelar'){
-
-        const select = new MessageActionRow()
+        const select = new ActionRowBuilder()
             .addComponents(
-                new MessageSelectMenu()
+                new SelectMenuBuilder()
                     .setCustomId(`status_${actionId}`)
                     .setPlaceholder('Selecione o status da ação')
                     .addOptions([
@@ -97,7 +166,7 @@ client.on('interactionCreate', async (interaction) => {
                     ])
             );
 
-            await interaction.reply({ content: '⚔️ Qual foi o status da ação?', components: [select], ephemeral: true });
+        await interaction.reply({ content: '⚔️ Qual foi o status da ação?', components: [select], ephemeral: true });
     }
 });
 
@@ -113,10 +182,20 @@ client.on('interactionCreate', async (interaction) => {
     const participantes = actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante';
 
     await interaction.channel.send({
-        content: `🎭 **Ação:** ${actionData.name}\n📅 **Data:** <t:${Math.floor(actionId / 1000)}:d>\n👥 **Participantes:** ${participantes}\n⚔️ **Status:** ${status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota'}`
+        embeds: [{
+            color: status === 'vitoria' ? 0x00FF00 : 0xFF0000,
+            title: '🎮 Resultado da Ação',
+            fields: [
+                { name: '🎭 Ação', value: actionData.name, inline: true },
+                { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: true },
+                { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: true },
+                { name: '👥 Participantes', value: participantes }
+            ]
+        }]
     });
 
     delete actions[actionId];
+    await interaction.reply({ content: 'Ação finalizada com sucesso!', ephemeral: true });
 });
 
 client.login(process.env.TOKEN);
