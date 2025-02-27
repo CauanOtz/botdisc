@@ -129,6 +129,10 @@ client.on('interactionCreate', async (interaction) => {
         const pegouArma = interaction.values[0] === 'sim';
 
         if (pegouArma) {
+            // Atualizando os dados temporários antes de mostrar o modal
+            tempData.pegouArma = true;
+            tempActions.set(interaction.user.id, tempData); // Garantindo que os dados são salvos
+
             const quantidadeModal = new ModalBuilder()
                 .setCustomId('quantidade_armas_modal')
                 .setTitle('Quantidade de Armas');
@@ -144,7 +148,6 @@ client.on('interactionCreate', async (interaction) => {
                 new ActionRowBuilder().addComponents(quantidadeInput)
             );
 
-            tempData.pegouArma = true;
             await interaction.showModal(quantidadeModal);
         } else {
             // Criar ação sem armas
@@ -158,7 +161,7 @@ client.on('interactionCreate', async (interaction) => {
                 reservas: []
             };
 
-            tempActions.delete(interaction.user.id); // Limpa dados temporários
+            tempActions.delete(interaction.user.id);
 
             const buttons = new ActionRowBuilder()
                 .addComponents(
@@ -223,7 +226,7 @@ client.on('interactionCreate', async (interaction) => {
             reservas: []
         };
 
-        tempActions.delete(interaction.user.id); // Limpa dados temporários
+        tempActions.delete(interaction.user.id);
 
         const buttons = new ActionRowBuilder()
             .addComponents(
