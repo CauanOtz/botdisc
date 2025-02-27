@@ -344,23 +344,19 @@ client.on('interactionCreate', async (interaction) => {
         ? `Sim (${actionData.quantidadeArmas} armas)` 
         : 'Não';
 
-    // Envia o resultado em um canal separado
-    const logChannel = interaction.guild.channels.cache.find(c => c.name === 'registro-ações');
-    if(logChannel) {
-        await logChannel.send({
-            embeds: [{
-                color: status === 'vitoria' ? 0x00FF00 : 0xFF0000,
-                title: '🎮 Resultado da Ação',
-                fields: [
-                    { name: '🎭 Ação', value: actionData.name, inline: false },
-                    { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
-                    { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: false },
-                    { name: '🗡️ Armas do Baú', value: armasInfo, inline: false },
-                    { name: '👥 Participantes', value: participantes, inline: false }
-                ]
-            }]
-        });
-    }
+    await interaction.channel.send({
+        embeds: [{
+            color: status === 'vitoria' ? 0x00FF00 : 0xFF0000,
+            title: '🎮 Resultado da Ação',
+            fields: [
+                { name: '🎭 Ação', value: actionData.name, inline: false },
+                { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
+                { name: '⚔️ Status', value: status === 'vitoria' ? '⚔️ Status: 🏆 Vitória' : '⚔️ Status: 💀 Derrota', inline: false },
+                { name: '🗡️ Armas do Baú', value: armasInfo, inline: false },
+                { name: '👥 Participantes', value: participantes, inline: false }
+            ]
+        }]
+    });
 
     delete actions[actionId];
     await interaction.reply({
