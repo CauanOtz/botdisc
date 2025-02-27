@@ -19,14 +19,25 @@ client.on('ready', () => {
 client.on('messageCreate', async (message) => {
     if(message.channel.name !== 'iniciar-ação' || message.author.bot) return;
 
+    if(message.content === '.') return;
+
     const args = message.content.split('\n');
     if(args.length < 3){
-        return message.reply('Formato inválido. Use: \n```Ação: NomeDaAção \n Vagas: NúmeroDeVagas \nFoi pega arma do baú? (sim/não)```');
+        return message.reply('Formato inválido. Use: \n```Ação: NomeDaAção \nVagas: NúmeroDeVagas \nFoi pega arma do baú? (sim/não)```');
+    }
+
+    // Melhorando a extração dos valores
+    const actionLine = args[0].toLowerCase();
+    const vagasLine = args[1].toLowerCase();
+    const armaLine = args[2].toLowerCase();
+
+    if(!actionLine.startsWith('ação:') || !vagasLine.startsWith('vagas:') || !armaLine.includes('foi pega arma do baú')){
+        return message.reply('Formato inválido. Use: \n```Ação: NomeDaAção \nVagas: NúmeroDeVagas \nFoi pega arma do baú? (sim/não)```');
     }
 
     const actionName = args[0].split(':')[1].trim();
-    const vagas = parseInt(args[1].split(': ')[1], 10);
-    const pegouArma = args[2].split(': ')[1].trim().toLowerCase() === 'sim';
+    const vagas = parseInt(args[1].split(':')[1], 10);
+    const pegouArma = args[2].toLowerCase().includes('sim');
 
     if(isNaN(vagas)) return message.reply('Número de vagas inválido. Use um número válido.');
 
