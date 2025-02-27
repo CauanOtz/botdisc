@@ -20,7 +20,7 @@ const client = new Client({
     ]
 });
 
-const actions = {};
+let actions = {};
 const tempActions = new Map();
 
 client.on('ready', () => {
