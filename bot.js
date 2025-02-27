@@ -176,11 +176,12 @@ client.on('interactionCreate', async (interaction) => {
         flags: 1 << 6
     });
 
-    if(action === 'Participar'){
+    if(action === 'Participar' || action === 'Retirar'){
         const isParticipante = actionData.participantes.includes(interaction.user.id);
         const isReserva = actionData.reservas.includes(interaction.user.id);
+        const isUserInAction = isParticipante || isReserva;
 
-        if(isParticipante || isReserva){
+        if(isUserInAction){
             // Remove o usuário da lista em que ele está
             actionData.participantes = actionData.participantes.filter(id => id !== interaction.user.id);
             actionData.reservas = actionData.reservas.filter(id => id !== interaction.user.id);
@@ -206,30 +207,7 @@ client.on('interactionCreate', async (interaction) => {
             ? actionData.reservas.map((id, index) => `${index + 1}. <@${id}>`).join('\n')
             : '*Nenhuma reserva ainda*';
 
-        const isUserInAction = actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id);
-
-        // Atualiza a mensagem principal (visível para todos)
-        await interaction.message.edit({
-            embeds: [{
-                color: 0x0099FF,
-                title: `🎮 ${actionData.name}`,
-                description: `
-📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
-
-👥 **Vagas:** ${actionData.participantes.length}/${actionData.vagas}
-🗡️ **Arma do baú:** ${actionData.quantidadeArmas > 0 ? `Sim (${actionData.quantidadeArmas} armas)` : 'Não'}
-
-**Participantes:**
-${participantesList}
-
-${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
-                footer: {
-                    text: 'Use os botões abaixo para participar ou se retirar da ação!'
-                }
-            }]
-        });
-
-        // Mantém os botões originais para todos os usuários
+        // Atualiza a mensagem principal
         await interaction.message.edit({
             embeds: [{
                 color: 0x0099FF,
@@ -269,16 +247,20 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                 )]
         });
 
-        // Responde ao usuário com uma mensagem ephemeral contendo os botões personalizados
+        // Verifica novamente o status após as alterações
+        const newIsUserInAction = actionData.participantes.includes(interaction.user.id) || 
+                                actionData.reservas.includes(interaction.user.id);
+
+        // Responde ao usuário
         await interaction.reply({
-            content: isUserInAction ? 'Você está participando desta ação!' : 'Você não está participando desta ação.',
+            content: newIsUserInAction ? 'Você está participando desta ação!' : 'Você não está participando desta ação.',
             ephemeral: true,
             components: [new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId(`Participar_${actionId}`)
-                        .setLabel(isUserInAction ? '❌ Se Retirar' : '✅ Participar')
-                        .setStyle(isUserInAction ? ButtonStyle.Danger : ButtonStyle.Success),
+                        .setLabel(newIsUserInAction ? '❌ Se Retirar' : '✅ Participar')
+                        .setStyle(newIsUserInAction ? ButtonStyle.Danger : ButtonStyle.Success),
                     new ButtonBuilder()
                         .setCustomId(`Finalizar_${actionId}`)
                         .setLabel('🏆 Finalizar')
@@ -288,74 +270,6 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                         .setLabel('🚫 Cancelar Ação')
                         .setStyle(ButtonStyle.Danger)
                 )]
-        });
-    }
-
-    if(action === 'Retirar') {
-        if(!actionData.participantes.includes(interaction.user.id)) {
-            return interaction.reply({ 
-                content: 'Você não está na lista de participantes desta ação.', 
-                ephemeral: true 
-            });
-        }
-
-        actionData.participantes = actionData.participantes.filter(id => id !== interaction.user.id);
-        await interaction.reply({ 
-            content: 'Você foi removido da lista de participantes.', 
-            ephemeral: true 
-        });
-
-        // Formatando a lista de participantes com números
-        const participantesList = actionData.participantes.length > 0 
-            ? actionData.participantes.map((id, index) => `${index + 1}. <@${id}>`).join('\n')
-            : '*Nenhum participante ainda*';
-
-        // Formatando a lista de reservas com números
-        const reservasList = actionData.reservas.length > 0
-            ? actionData.reservas.map((id, index) => `${index + 1}. <@${id}>`).join('\n')
-            : '*Nenhuma reserva ainda*';
-
-        const buttons = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`Participar_${actionId}`)
-                    .setLabel('✅ Participar')
-                    .setStyle(ButtonStyle.Success)
-                    .setDisabled(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id)),
-                new ButtonBuilder()
-                    .setCustomId(`Retirar_${actionId}`)
-                    .setLabel('❌ Se Retirar')
-                    .setStyle(ButtonStyle.Danger)
-                    .setDisabled(!actionData.participantes.includes(interaction.user.id) && !actionData.reservas.includes(interaction.user.id)),
-                new ButtonBuilder()
-                    .setCustomId(`Finalizar_${actionId}`)
-                    .setLabel('🏆 Finalizar')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId(`Cancelar_${actionId}`)
-                    .setLabel('🚫 Cancelar Ação')
-                    .setStyle(ButtonStyle.Danger)
-            );
-
-        await interaction.message.edit({
-            embeds: [{
-                color: 0x0099FF,
-                title: `🎮 ${actionData.name}`,
-                description: `
-📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
-
-👥 **Vagas:** ${actionData.participantes.length}/${actionData.vagas}
-🗡️ **Arma do baú:** ${actionData.quantidadeArmas > 0 ? `Sim (${actionData.quantidadeArmas} armas)` : 'Não'}
-
-**Participantes:**
-${participantesList}
-
-${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
-                footer: {
-                    text: 'Use os botões abaixo para participar ou se retirar da ação!'
-                }
-            }],
-            components: [buttons]
         });
     }
 
