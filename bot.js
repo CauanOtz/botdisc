@@ -358,7 +358,7 @@ client.on('interactionCreate', async (interaction) => {
                     { name: '🎭 Ação', value: actionData.name, inline: false },
                     { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
                     { name: '👤 Responsável', value: `<@${actionData.criador}>`, inline: false },
-                    { name: '⚔️ Status', value: status === 'vitoria' ? '⚔️ Status: 🏆 Vitória' : '⚔️ Status: 💀 Derrota', inline: false },
+                    { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: false },
                     { name: '🗡️ Armas do Baú', value: armasInfo, inline: false },
                     { name: '👥 Participantes', value: participantes, inline: false }
                 ]
