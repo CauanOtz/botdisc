@@ -66,71 +66,47 @@ client.on('interactionCreate', async (interaction) => {
             .setPlaceholder('Digite o número de vagas')
             .setRequired(true);
 
-        // Primeiro mostramos apenas o modal básico
+        const armaInput = new TextInputBuilder()
+            .setCustomId('arma_acao')
+            .setLabel('Foi pega arma do baú?')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Digite sim ou não')
+            .setRequired(true);
+
         modal.addComponents(
             new ActionRowBuilder().addComponents(nomeInput),
-            new ActionRowBuilder().addComponents(vagasInput)
+            new ActionRowBuilder().addComponents(vagasInput),
+            new ActionRowBuilder().addComponents(armaInput)
         );
 
         await interaction.showModal(modal);
     }
 });
 
-// Tratando a submissão do modal inicial
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isModalSubmit()) return;
 
     if (interaction.customId === 'modal_acao') {
         const actionName = interaction.fields.getTextInputValue('nome_acao');
         const vagas = parseInt(interaction.fields.getTextInputValue('vagas_acao'));
+        const armaResponse = interaction.fields.getTextInputValue('arma_acao').toLowerCase();
 
         if(isNaN(vagas)) {
-            return interaction.reply({ content: 'Número de vagas inválido!', ephemeral: true });
-        }
-
-        // Usando Map para armazenar dados temporários
-        tempActions.set(interaction.user.id, {
-            name: actionName,
-            vagas: vagas
-        });
-
-        const armaSelect = new ActionRowBuilder()
-            .addComponents(
-                new SelectMenuBuilder()
-                    .setCustomId('arma_select')  // Simplificando o customId
-                    .setPlaceholder('Foi pega arma do baú?')
-                    .addOptions([
-                        { label: 'Sim', value: 'sim', description: 'Armas do baú foram pegas' },
-                        { label: 'Não', value: 'nao', description: 'Nenhuma arma do baú foi pega' }
-                    ])
-            );
-
-        await interaction.reply({
-            content: 'Foi pega arma do baú?',
-            components: [armaSelect],
-            ephemeral: true
-        });
-    }
-});
-
-// Tratando a seleção de armas
-client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isStringSelectMenu()) return;
-    
-    if (interaction.customId === 'arma_select') {
-        const tempData = tempActions.get(interaction.user.id);
-        if (!tempData) {
             return interaction.reply({ 
-                content: 'Erro: Sessão expirada. Por favor, crie a ação novamente.', 
-                flags: 1 << 6
+                content: 'Número de vagas inválido!', 
+                flags: 1 << 6 
             });
         }
 
-        const pegouArma = interaction.values[0] === 'sim';
+        const pegouArma = armaResponse === 'sim';
 
         if (pegouArma) {
-            tempData.pegouArma = true;
-            tempActions.set(interaction.user.id, tempData);
+            // Se pegou arma, pergunta a quantidade
+            tempActions.set(interaction.user.id, {
+                name: actionName,
+                vagas: vagas,
+                pegouArma: true
+            });
 
             const quantidadeModal = new ModalBuilder()
                 .setCustomId('quantidade_armas_modal')
@@ -147,19 +123,22 @@ client.on('interactionCreate', async (interaction) => {
                 new ActionRowBuilder().addComponents(quantidadeInput)
             );
 
+            await interaction.reply({ 
+                content: 'Por favor, informe a quantidade de armas.', 
+                flags: 1 << 6 
+            });
             await interaction.showModal(quantidadeModal);
         } else {
+            // Se não pegou arma, cria a ação diretamente
             const actionId = Date.now();
             actions[actionId] = {
-                name: tempData.name,
-                vagas: tempData.vagas,
+                name: actionName,
+                vagas: vagas,
                 pegouArma: false,
                 quantidadeArmas: 0,
                 participantes: [],
                 reservas: []
             };
-
-            tempActions.delete(interaction.user.id);
 
             const buttons = new ActionRowBuilder()
                 .addComponents(
@@ -173,22 +152,19 @@ client.on('interactionCreate', async (interaction) => {
                         .setStyle(ButtonStyle.Danger)
                 );
 
-            // Primeiro, atualizamos a mensagem do select
-            await interaction.update({ 
-                components: [], 
+            await interaction.reply({ 
                 content: 'Ação criada com sucesso!', 
                 flags: 1 << 6 
             });
 
-            // Depois, enviamos a nova mensagem com o embed
             await interaction.channel.send({
                 embeds: [{
                     color: 0x0099FF,
-                    title: `🎮 ${tempData.name}`,
+                    title: `🎮 ${actionName}`,
                     description: `
 📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
 
-👥 **Vagas:** 0/${tempData.vagas}
+👥 **Vagas:** 0/${vagas}
 🗡️ **Arma do baú:** Não
 
 **Participantes:**
