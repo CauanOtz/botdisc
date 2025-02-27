@@ -193,11 +193,15 @@ client.on('interactionCreate', async (interaction) => {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId(`Participar_${actionId}`)
-                    .setLabel(actionData.participantes.includes(interaction.user.id) ? '❌ Se Retirar' : '✅ Participar')
-                    .setStyle(actionData.participantes.includes(interaction.user.id) ? ButtonStyle.Danger : ButtonStyle.Success),
+                    .setLabel(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? '❌ Se Retirar' : '✅ Participar')
+                    .setStyle(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? ButtonStyle.Danger : ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`Finalizar_${actionId}`)
+                    .setLabel('🏆 Finalizar')
+                    .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
                     .setCustomId(`Cancelar_${actionId}`)
-                    .setLabel('❌ Cancelar')
+                    .setLabel('🚫 Cancelar Ação')
                     .setStyle(ButtonStyle.Danger)
             );
 
@@ -209,7 +213,7 @@ client.on('interactionCreate', async (interaction) => {
 📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
 
 👥 **Vagas:** ${actionData.participantes.length}/${actionData.vagas}
-🗡️ **Arma do baú:** ${actionData.pegouArma ? 'Sim' : 'Não'}
+🗡️ **Arma do baú:** ${actionData.quantidadeArmas > 0 ? `Sim (${actionData.quantidadeArmas} armas)` : 'Não'}
 
 **Participantes:**
 ${participantesList}
@@ -223,7 +227,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
         });
     }
 
-    if(action === 'Cancelar'){
+    if(action === 'Finalizar'){
         const select = new ActionRowBuilder()
             .addComponents(
                 new SelectMenuBuilder()
@@ -236,6 +240,23 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
             );
 
         await interaction.reply({ content: '⚔️ Qual foi o status da ação?', components: [select], ephemeral: true });
+    }
+
+    if(action === 'Cancelar'){
+        await interaction.channel.send({
+            embeds: [{
+                color: 0xFF0000,
+                title: '🚫 Ação Cancelada',
+                fields: [
+                    { name: '🎭 Ação', value: actionData.name, inline: true },
+                    { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: true },
+                    { name: '👥 Participantes', value: actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante' }
+                ]
+            }]
+        });
+
+        delete actions[actionId];
+        await interaction.reply({ content: 'Ação cancelada com sucesso!', ephemeral: true });
     }
 });
 
