@@ -181,9 +181,17 @@ client.on('interactionCreate', async (interaction) => {
         const isReserva = actionData.reservas.includes(interaction.user.id);
 
         if(isParticipante || isReserva){
+            // Remove o usuário da lista em que ele está
             actionData.participantes = actionData.participantes.filter(id => id !== interaction.user.id);
             actionData.reservas = actionData.reservas.filter(id => id !== interaction.user.id);
-            await interaction.reply({content: 'Você foi removido da lista de participantes.', ephemeral: true});
+
+            // Se um participante saiu e há reservas, promove o primeiro reserva
+            if(isParticipante && actionData.reservas.length > 0) {
+                const proximoParticipante = actionData.reservas.shift();
+                actionData.participantes.push(proximoParticipante);
+            }
+
+            await interaction.reply({content: 'Você foi removido da lista.', ephemeral: true});
         }else if(actionData.participantes.length < actionData.vagas){
             actionData.participantes.push(interaction.user.id);
             await interaction.reply({content: 'Você foi adicionado a lista de participantes.', ephemeral: true});
@@ -201,22 +209,6 @@ client.on('interactionCreate', async (interaction) => {
         const reservasList = actionData.reservas.length > 0
             ? actionData.reservas.map((id, index) => `${index + 1}. <@${id}>`).join('\n')
             : '*Nenhuma reserva ainda*';
-
-        const buttons = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`Participar_${actionId}`)
-                    .setLabel(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? '❌ Se Retirar' : '✅ Participar')
-                    .setStyle(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? ButtonStyle.Danger : ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId(`Finalizar_${actionId}`)
-                    .setLabel('🏆 Finalizar')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId(`Cancelar_${actionId}`)
-                    .setLabel('🚫 Cancelar Ação')
-                    .setStyle(ButtonStyle.Danger)
-            );
 
         const messageContent = {
             embeds: [{
@@ -236,18 +228,25 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                     text: 'Use os botões abaixo para participar ou se retirar da ação!'
                 }
             }],
-            components: [buttons]
+            components: [new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`Participar_${actionId}`)
+                        .setLabel('✅ Participar')
+                        .setStyle(ButtonStyle.Success),
+                    new ButtonBuilder()
+                        .setCustomId(`Finalizar_${actionId}`)
+                        .setLabel('🏆 Finalizar')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId(`Cancelar_${actionId}`)
+                        .setLabel('🚫 Cancelar Ação')
+                        .setStyle(ButtonStyle.Danger)
+                )]
         };
 
-        // Atualiza a mensagem para todos, mas mantém o estado do botão personalizado para cada usuário
+        // Atualiza a mensagem principal para todos
         await interaction.message.edit(messageContent);
-        
-        // Atualiza o botão especificamente para o usuário que interagiu
-        await interaction.followUp({
-            content: 'Botões atualizados!',
-            ephemeral: true,
-            components: [buttons]
-        });
     }
 
     if(action === 'Retirar') {
