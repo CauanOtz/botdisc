@@ -1,11 +1,11 @@
 require('dotenv').config();
-const { Client, Intents, MessageActionRow, MessageButton, MessageSelectMenu } = require('discord.js');
+const { Client, GatewayIntentBits, MessageActionRow, MessageButton, MessageSelectMenu } = require('discord.js');
 
 const client = new Client({
     intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MEMBERS
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMembers
     ]
 });
 
