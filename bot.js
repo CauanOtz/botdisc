@@ -21,7 +21,6 @@ const client = new Client({
 });
 
 let actions = {};
-const tempActions = new Map();
 
 client.on('ready', () => {
     console.log('Bot está funcionando autenticado e pronto para uso!');
@@ -255,7 +254,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
             content: currentIsUserInAction 
                 ? 'Você está participando desta ação!' 
                 : 'Você não está participando desta ação.',
-            ephemeral: true, // Alterado para true
+            ephemeral: true, 
             components: [] // Removido os botões duplicados
         });
     }
@@ -275,7 +274,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
         await interaction.reply({
             content: '⚔️ Qual foi o status da ação?',
             components: [select],
-            ephemeral: true // Alterado para true
+            ephemeral: true 
         });
     }
 
@@ -295,7 +294,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
         delete actions[actionId];
         await interaction.reply({
             content: 'Ação cancelada com sucesso!',
-            ephemeral: true // Alterado para true
+            ephemeral: true // funcionando
         });
     }
 });
@@ -331,7 +330,7 @@ client.on('interactionCreate', async (interaction) => {
     delete actions[actionId];
     await interaction.reply({
         content: 'Ação finalizada com sucesso!',
-        ephemeral: true // Alterado para true
+        ephemeral: true 
     });
 });
 
