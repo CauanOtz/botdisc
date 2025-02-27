@@ -21,6 +21,7 @@ const client = new Client({
 });
 
 const actions = {};
+const tempActions = new Map();
 
 client.on('ready', () => {
     console.log('Bot está funcionando autenticado e pronto para uso!');
@@ -87,24 +88,22 @@ client.on('interactionCreate', async (interaction) => {
             return interaction.reply({ content: 'Número de vagas inválido!', ephemeral: true });
         }
 
-        // Criando o select para armas do baú
+        // Usando Map para armazenar dados temporários
+        tempActions.set(interaction.user.id, {
+            name: actionName,
+            vagas: vagas
+        });
+
         const armaSelect = new ActionRowBuilder()
             .addComponents(
                 new SelectMenuBuilder()
-                    .setCustomId(`arma_select_${Date.now()}`)
+                    .setCustomId('arma_select')  // Simplificando o customId
                     .setPlaceholder('Foi pega arma do baú?')
                     .addOptions([
                         { label: 'Sim', value: 'sim', description: 'Armas do baú foram pegas' },
                         { label: 'Não', value: 'nao', description: 'Nenhuma arma do baú foi pega' }
                     ])
             );
-
-        // Salvando temporariamente os dados
-        const tempData = {
-            name: actionName,
-            vagas: vagas
-        };
-        actions[`temp_${interaction.user.id}`] = tempData;
 
         await interaction.reply({
             content: 'Foi pega arma do baú?',
@@ -118,14 +117,18 @@ client.on('interactionCreate', async (interaction) => {
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isSelectMenu()) return;
     
-    if (interaction.customId.startsWith('arma_select_')) {
-        const tempData = actions[`temp_${interaction.user.id}`];
-        if (!tempData) return interaction.reply({ content: 'Erro: Dados temporários não encontrados', ephemeral: true });
+    if (interaction.customId === 'arma_select') {
+        const tempData = tempActions.get(interaction.user.id);
+        if (!tempData) {
+            return interaction.reply({ 
+                content: 'Erro: Sessão expirada. Por favor, crie a ação novamente.', 
+                ephemeral: true 
+            });
+        }
 
         const pegouArma = interaction.values[0] === 'sim';
 
         if (pegouArma) {
-            // Se pegou arma, pergunta quantas
             const quantidadeModal = new ModalBuilder()
                 .setCustomId('quantidade_armas_modal')
                 .setTitle('Quantidade de Armas');
@@ -144,7 +147,7 @@ client.on('interactionCreate', async (interaction) => {
             tempData.pegouArma = true;
             await interaction.showModal(quantidadeModal);
         } else {
-            // Se não pegou arma, cria a ação diretamente
+            // Criar ação sem armas
             const actionId = Date.now();
             actions[actionId] = {
                 name: tempData.name,
@@ -155,7 +158,7 @@ client.on('interactionCreate', async (interaction) => {
                 reservas: []
             };
 
-            delete actions[`temp_${interaction.user.id}`];
+            tempActions.delete(interaction.user.id); // Limpa dados temporários
 
             const buttons = new ActionRowBuilder()
                 .addComponents(
@@ -197,8 +200,13 @@ client.on('interactionCreate', async (interaction) => {
     if (!interaction.isModalSubmit()) return;
 
     if (interaction.customId === 'quantidade_armas_modal') {
-        const tempData = actions[`temp_${interaction.user.id}`];
-        if (!tempData) return interaction.reply({ content: 'Erro: Dados temporários não encontrados', ephemeral: true });
+        const tempData = tempActions.get(interaction.user.id);
+        if (!tempData) {
+            return interaction.reply({ 
+                content: 'Erro: Sessão expirada. Por favor, crie a ação novamente.', 
+                ephemeral: true 
+            });
+        }
 
         const quantidade = parseInt(interaction.fields.getTextInputValue('quantidade_armas'));
         if(isNaN(quantidade)) {
@@ -215,7 +223,7 @@ client.on('interactionCreate', async (interaction) => {
             reservas: []
         };
 
-        delete actions[`temp_${interaction.user.id}`];
+        tempActions.delete(interaction.user.id); // Limpa dados temporários
 
         const buttons = new ActionRowBuilder()
             .addComponents(
