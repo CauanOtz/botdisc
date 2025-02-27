@@ -190,14 +190,10 @@ client.on('interactionCreate', async (interaction) => {
                 const proximoParticipante = actionData.reservas.shift();
                 actionData.participantes.push(proximoParticipante);
             }
-
-            await interaction.reply({content: 'Você foi removido da lista.', ephemeral: true});
         }else if(actionData.participantes.length < actionData.vagas){
             actionData.participantes.push(interaction.user.id);
-            await interaction.reply({content: 'Você foi adicionado a lista de participantes.', ephemeral: true});
         }else {
             actionData.reservas.push(interaction.user.id);
-            await interaction.reply({content: 'Você foi adicionado a lista de reservas.', ephemeral: true});
         }
 
         // Formatando a lista de participantes com números
@@ -212,7 +208,8 @@ client.on('interactionCreate', async (interaction) => {
 
         const isUserInAction = actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id);
 
-        const messageContent = {
+        // Atualiza a mensagem principal (visível para todos)
+        await interaction.message.edit({
             embeds: [{
                 color: 0x0099FF,
                 title: `🎮 ${actionData.name}`,
@@ -229,7 +226,13 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                 footer: {
                     text: 'Use os botões abaixo para participar ou se retirar da ação!'
                 }
-            }],
+            }]
+        });
+
+        // Responde ao usuário com uma mensagem ephemeral contendo os botões personalizados
+        await interaction.reply({
+            content: isUserInAction ? 'Você está participando desta ação!' : 'Você não está participando desta ação.',
+            ephemeral: true,
             components: [new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
@@ -245,10 +248,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                         .setLabel('🚫 Cancelar Ação')
                         .setStyle(ButtonStyle.Danger)
                 )]
-        };
-
-        // Atualiza a mensagem principal para todos
-        await interaction.message.edit(messageContent);
+        });
     }
 
     if(action === 'Retirar') {
