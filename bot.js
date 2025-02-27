@@ -123,8 +123,17 @@ client.on('interactionCreate', async (interaction) => {
                     .setLabel('✅ Participar')
                     .setStyle(ButtonStyle.Success),
                 new ButtonBuilder()
+                    .setCustomId(`Retirar_${actionId}`)
+                    .setLabel('❌ Se Retirar')
+                    .setStyle(ButtonStyle.Danger)
+                    .setDisabled(!actions[actionId].participantes.includes(interaction.user.id)),
+                new ButtonBuilder()
+                    .setCustomId(`Finalizar_${actionId}`)
+                    .setLabel('🏆 Finalizar')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
                     .setCustomId(`Cancelar_${actionId}`)
-                    .setLabel('❌ Cancelar')
+                    .setLabel('🚫 Cancelar Ação')
                     .setStyle(ButtonStyle.Danger)
             );
 
@@ -193,8 +202,13 @@ client.on('interactionCreate', async (interaction) => {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId(`Participar_${actionId}`)
-                    .setLabel(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? '❌ Se Retirar' : '✅ Participar')
-                    .setStyle(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? ButtonStyle.Danger : ButtonStyle.Success),
+                    .setLabel('✅ Participar')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`Retirar_${actionId}`)
+                    .setLabel('❌ Se Retirar')
+                    .setStyle(ButtonStyle.Danger)
+                    .setDisabled(!actionData.participantes.includes(interaction.user.id)),
                 new ButtonBuilder()
                     .setCustomId(`Finalizar_${actionId}`)
                     .setLabel('🏆 Finalizar')
@@ -225,6 +239,24 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
             }],
             components: [buttons]
         });
+    }
+
+    if(action === 'Retirar') {
+        if(!actionData.participantes.includes(interaction.user.id)) {
+            return interaction.reply({ 
+                content: 'Você não está na lista de participantes desta ação.', 
+                ephemeral: true 
+            });
+        }
+
+        actionData.participantes = actionData.participantes.filter(id => id !== interaction.user.id);
+        await interaction.reply({ 
+            content: 'Você foi removido da lista de participantes.', 
+            ephemeral: true 
+        });
+
+        // Atualiza a mensagem após a retirada
+        // (Repete o código de atualização da mensagem aqui)
     }
 
     if(action === 'Finalizar'){
@@ -270,6 +302,9 @@ client.on('interactionCreate', async (interaction) => {
 
     const status = interaction.values[0];
     const participantes = actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante';
+    const armasInfo = actionData.quantidadeArmas > 0 
+        ? `Sim (${actionData.quantidadeArmas} armas)` 
+        : 'Não';
 
     await interaction.channel.send({
         embeds: [{
@@ -279,6 +314,7 @@ client.on('interactionCreate', async (interaction) => {
                 { name: '🎭 Ação', value: actionData.name, inline: true },
                 { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: true },
                 { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: true },
+                { name: '🗡️ Armas do Baú', value: armasInfo, inline: true },
                 { name: '👥 Participantes', value: participantes }
             ]
         }]
