@@ -28,7 +28,7 @@ client.on('ready', () => {
 
 // Comando para configurar a mensagem fixa
 client.on('messageCreate', async (message) => {
-    if(message.channel.name !== 'iniciar-ação' || message.author.bot) return;
+    if(message.channel.name !== '💣⠂𝖠𝖼̧𝖺̃𝗈' || message.author.bot) return;
     if(message.content !== '!configurar') return;
 
     // Deleta a mensagem do comando
@@ -288,7 +288,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
 
         if(action === 'Cancelar'){
             // Envia a mensagem de cancelamento no canal de registro
-            const logChannel = interaction.guild.channels.cache.find(c => c.name === 'registro-ações');
+            const logChannel = interaction.guild.channels.cache.find(c => c.name === '📁⠂𝖱𝖾��𝖺𝗍𝗈́𝗋𝗂𝗈𝗌');
             if(logChannel) {
                 await logChannel.send({
                     embeds: [{
@@ -348,7 +348,7 @@ client.on('interactionCreate', async (interaction) => {
         : 'Não';
 
     // Envia o resultado em um canal separado
-    const logChannel = interaction.guild.channels.cache.find(c => c.name === 'registro-ações');
+    const logChannel = interaction.guild.channels.cache.find(c => c.name === '📁⠂𝖱𝖾𝗅𝖺𝗍𝗈́𝗋𝗂𝗈𝗌');
     if(logChannel) {
         await logChannel.send({
             embeds: [{
