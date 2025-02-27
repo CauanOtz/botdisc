@@ -115,23 +115,22 @@ client.on('interactionCreate', async (interaction) => {
 
 // Tratando a seleção de armas
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isSelectMenu()) return;
+    if (!interaction.isStringSelectMenu()) return;
     
     if (interaction.customId === 'arma_select') {
         const tempData = tempActions.get(interaction.user.id);
         if (!tempData) {
             return interaction.reply({ 
                 content: 'Erro: Sessão expirada. Por favor, crie a ação novamente.', 
-                ephemeral: true 
+                flags: 1 << 6
             });
         }
 
         const pegouArma = interaction.values[0] === 'sim';
 
         if (pegouArma) {
-            // Atualizando os dados temporários antes de mostrar o modal
             tempData.pegouArma = true;
-            tempActions.set(interaction.user.id, tempData); // Garantindo que os dados são salvos
+            tempActions.set(interaction.user.id, tempData);
 
             const quantidadeModal = new ModalBuilder()
                 .setCustomId('quantidade_armas_modal')
@@ -175,7 +174,11 @@ client.on('interactionCreate', async (interaction) => {
                         .setStyle(ButtonStyle.Danger)
                 );
 
-            await interaction.update({ components: [], content: 'Ação criada com sucesso!', ephemeral: true });
+            await interaction.update({ 
+                components: [], 
+                content: 'Ação criada com sucesso!', 
+                flags: 1 << 6
+            });
             await interaction.channel.send({
                 embeds: [{
                     color: 0x0099FF,
@@ -207,13 +210,16 @@ client.on('interactionCreate', async (interaction) => {
         if (!tempData) {
             return interaction.reply({ 
                 content: 'Erro: Sessão expirada. Por favor, crie a ação novamente.', 
-                ephemeral: true 
+                flags: 1 << 6
             });
         }
 
         const quantidade = parseInt(interaction.fields.getTextInputValue('quantidade_armas'));
         if(isNaN(quantidade)) {
-            return interaction.reply({ content: 'Quantidade inválida!', ephemeral: true });
+            return interaction.reply({ 
+                content: 'Quantidade inválida!', 
+                flags: 1 << 6
+            });
         }
 
         const actionId = Date.now();
@@ -240,7 +246,10 @@ client.on('interactionCreate', async (interaction) => {
                     .setStyle(ButtonStyle.Danger)
             );
 
-        await interaction.reply({ content: 'Ação criada com sucesso!', ephemeral: true });
+        await interaction.reply({ 
+            content: 'Ação criada com sucesso!', 
+            flags: 1 << 6
+        });
         await interaction.channel.send({
             embeds: [{
                 color: 0x0099FF,
@@ -269,7 +278,10 @@ client.on('interactionCreate', async (interaction) => {
     const [action, actionId] = interaction.customId.split('_');
     const actionData = actions[actionId];
 
-    if(!actionData) return interaction.reply({ content: 'Ação não encontrada.', ephemeral: true });
+    if(!actionData) return interaction.reply({ 
+        content: 'Ação não encontrada.', 
+        flags: 1 << 6
+    });
 
     if(action === 'Participar'){
         if(actionData.participantes.includes(interaction.user.id)){
