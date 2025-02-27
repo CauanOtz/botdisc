@@ -210,6 +210,8 @@ client.on('interactionCreate', async (interaction) => {
             ? actionData.reservas.map((id, index) => `${index + 1}. <@${id}>`).join('\n')
             : '*Nenhuma reserva ainda*';
 
+        const isUserInAction = actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id);
+
         const messageContent = {
             embeds: [{
                 color: 0x0099FF,
@@ -232,8 +234,8 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId(`Participar_${actionId}`)
-                        .setLabel('✅ Participar')
-                        .setStyle(ButtonStyle.Success),
+                        .setLabel(isUserInAction ? '❌ Se Retirar' : '✅ Participar')
+                        .setStyle(isUserInAction ? ButtonStyle.Danger : ButtonStyle.Success),
                     new ButtonBuilder()
                         .setCustomId(`Finalizar_${actionId}`)
                         .setLabel('🏆 Finalizar')
