@@ -135,7 +135,8 @@ client.on('interactionCreate', async (interaction) => {
             pegouArma: armas > 0,
             quantidadeArmas: armas,
             participantes: [],
-            reservas: []
+            reservas: [],
+            criador: interaction.user.id
         };
 
         const buttons = new ActionRowBuilder()
@@ -286,7 +287,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
         await interaction.message.delete();
 
         if(action === 'Cancelar'){
-            // Envia a mensagem de cancelamento em um canal separado (opcional)
+            // Envia a mensagem de cancelamento no canal de registro
             const logChannel = interaction.guild.channels.cache.find(c => c.name === 'registro-ações');
             if(logChannel) {
                 await logChannel.send({
@@ -296,6 +297,8 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                         fields: [
                             { name: '🎭 Ação', value: actionData.name, inline: false },
                             { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
+                            { name: '👤 Responsável', value: `<@${actionData.criador}>`, inline: false },
+                            { name: '🚫 Cancelada por', value: `<@${interaction.user.id}>`, inline: false },
                             { name: '👥 Participantes', value: actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante', inline: false }
                         ]
                     }]
@@ -351,6 +354,7 @@ client.on('interactionCreate', async (interaction) => {
             fields: [
                 { name: '🎭 Ação', value: actionData.name, inline: false },
                 { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
+                { name: '👤 Responsável', value: `<@${actionData.criador}>`, inline: false },
                 { name: '⚔️ Status', value: status === 'vitoria' ? '⚔️ Status: 🏆 Vitória' : '⚔️ Status: 💀 Derrota', inline: false },
                 { name: '🗡️ Armas do Baú', value: armasInfo, inline: false },
                 { name: '👥 Participantes', value: participantes, inline: false }
