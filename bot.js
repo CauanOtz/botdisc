@@ -26,10 +26,13 @@ client.on('ready', () => {
     console.log('Bot está funcionando autenticado e pronto para uso!');
 });
 
-// Comando para iniciar o painel
+// Comando para configurar a mensagem fixa
 client.on('messageCreate', async (message) => {
     if(message.channel.name !== 'iniciar-ação' || message.author.bot) return;
-    if(message.content !== '!iniciar') return;
+    if(message.content !== '!configurar') return;
+
+    // Deleta a mensagem do comando
+    await message.delete();
 
     const button = new ActionRowBuilder()
         .addComponents(
@@ -39,10 +42,30 @@ client.on('messageCreate', async (message) => {
                 .setStyle(ButtonStyle.Primary)
         );
 
-    await message.channel.send({
-        content: '### 🎮 Painel de Criação de Ações\nClique no botão abaixo para criar uma nova ação!',
+    // Envia a mensagem fixa
+    const fixedMessage = await message.channel.send({
+        embeds: [{
+            color: 0x0099FF,
+            title: '🎮 Sistema de Ações',
+            description: 'Use o botão abaixo para criar uma nova ação!\n\n' +
+                        '**Como funciona:**\n' +
+                        '• Clique no botão para criar uma ação\n' +
+                        '• Preencha as informações necessárias\n' +
+                        '• Gerencie os participantes usando os botões\n' +
+                        '• Finalize ou cancele a ação quando necessário',
+            footer: {
+                text: 'Sistema de Ações - Clique no botão abaixo para começar!'
+            }
+        }],
         components: [button]
     });
+
+    // Opcional: Fixa a mensagem no canal
+    try {
+        await fixedMessage.pin();
+    } catch (error) {
+        console.error('Não foi possível fixar a mensagem:', error);
+    }
 });
 
 client.on('interactionCreate', async (interaction) => {
@@ -254,48 +277,56 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
             content: currentIsUserInAction 
                 ? 'Você está participando desta ação!' 
                 : 'Você não está participando desta ação.',
-            ephemeral: true, 
-            components: [] // Removido os botões duplicados
+            ephemeral: true
         });
     }
 
-    if(action === 'Finalizar'){
-        const select = new ActionRowBuilder()
-            .addComponents(
-                new SelectMenuBuilder()
-                    .setCustomId(`status_${actionId}`)
-                    .setPlaceholder('Selecione o status da ação')
-                    .addOptions([
-                        { label: '🏆 Vitória', value: 'vitoria' },
-                        { label: '💀 Derrota', value: 'derrota' }
-                    ])
-            );
+    if(action === 'Finalizar' || action === 'Cancelar'){
+        // Remove a mensagem original da ação
+        await interaction.message.delete();
 
-        await interaction.reply({
-            content: '⚔️ Qual foi o status da ação?',
-            components: [select],
-            ephemeral: true 
-        });
-    }
+        if(action === 'Cancelar'){
+            // Envia a mensagem de cancelamento em um canal separado (opcional)
+            const logChannel = interaction.guild.channels.cache.find(c => c.name === 'registro-ações');
+            if(logChannel) {
+                await logChannel.send({
+                    embeds: [{
+                        color: 0xFF0000,
+                        title: '🚫 Ação Cancelada',
+                        fields: [
+                            { name: '🎭 Ação', value: actionData.name, inline: false },
+                            { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
+                            { name: '👥 Participantes', value: actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante', inline: false }
+                        ]
+                    }]
+                });
+            }
 
-    if(action === 'Cancelar'){
-        await interaction.channel.send({
-            embeds: [{
-                color: 0xFF0000,
-                title: '🚫 Ação Cancelada',
-                fields: [
-                    { name: '🎭 Ação', value: actionData.name, inline: true },
-                    { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: true },
-                    { name: '👥 Participantes', value: actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante' }
-                ]
-            }]
-        });
+            delete actions[actionId];
+            await interaction.reply({
+                content: 'Ação cancelada com sucesso!',
+                ephemeral: true
+            });
+        }
 
-        delete actions[actionId];
-        await interaction.reply({
-            content: 'Ação cancelada com sucesso!',
-            ephemeral: true // funcionando
-        });
+        if(action === 'Finalizar'){
+            const select = new ActionRowBuilder()
+                .addComponents(
+                    new SelectMenuBuilder()
+                        .setCustomId(`status_${actionId}`)
+                        .setPlaceholder('Selecione o status da ação')
+                        .addOptions([
+                            { label: '🏆 Vitória', value: 'vitoria' },
+                            { label: '💀 Derrota', value: 'derrota' }
+                        ])
+                );
+
+            await interaction.reply({
+                content: '⚔️ Qual foi o status da ação?',
+                components: [select],
+                ephemeral: true
+            });
+        }
     }
 });
 
@@ -313,19 +344,23 @@ client.on('interactionCreate', async (interaction) => {
         ? `Sim (${actionData.quantidadeArmas} armas)` 
         : 'Não';
 
-    await interaction.channel.send({
-        embeds: [{
-            color: status === 'vitoria' ? 0x00FF00 : 0xFF0000,
-            title: '🎮 Resultado da Ação',
-            fields: [
-                { name: '🎭 Ação', value: actionData.name, inline: false },
-                { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
-                { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: false },
-                { name: '🗡️ Armas do Baú', value: armasInfo, inline: false },
-                { name: '👥 Participantes', value: participantes, inline: false }
-            ]
-        }]
-    });
+    // Envia o resultado em um canal separado
+    const logChannel = interaction.guild.channels.cache.find(c => c.name === 'registro-ações');
+    if(logChannel) {
+        await logChannel.send({
+            embeds: [{
+                color: status === 'vitoria' ? 0x00FF00 : 0xFF0000,
+                title: '🎮 Resultado da Ação',
+                fields: [
+                    { name: '🎭 Ação', value: actionData.name, inline: false },
+                    { name: '📅 Data', value: `<t:${Math.floor(actionId / 1000)}:F>`, inline: false },
+                    { name: '⚔️ Status', value: status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota', inline: false },
+                    { name: '🗡️ Armas do Baú', value: armasInfo, inline: false },
+                    { name: '👥 Participantes', value: participantes, inline: false }
+                ]
+            }]
+        });
+    }
 
     delete actions[actionId];
     await interaction.reply({
