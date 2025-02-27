@@ -121,12 +121,13 @@ client.on('interactionCreate', async (interaction) => {
                 new ButtonBuilder()
                     .setCustomId(`Participar_${actionId}`)
                     .setLabel('✅ Participar')
-                    .setStyle(ButtonStyle.Success),
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(actions[actionId].participantes.includes(interaction.user.id) || actions[actionId].reservas.includes(interaction.user.id)),
                 new ButtonBuilder()
                     .setCustomId(`Retirar_${actionId}`)
                     .setLabel('❌ Se Retirar')
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(!actions[actionId].participantes.includes(interaction.user.id)),
+                    .setDisabled(!actions[actionId].participantes.includes(interaction.user.id) && !actions[actionId].reservas.includes(interaction.user.id)),
                 new ButtonBuilder()
                     .setCustomId(`Finalizar_${actionId}`)
                     .setLabel('🏆 Finalizar')
@@ -203,12 +204,13 @@ client.on('interactionCreate', async (interaction) => {
                 new ButtonBuilder()
                     .setCustomId(`Participar_${actionId}`)
                     .setLabel('✅ Participar')
-                    .setStyle(ButtonStyle.Success),
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id)),
                 new ButtonBuilder()
                     .setCustomId(`Retirar_${actionId}`)
                     .setLabel('❌ Se Retirar')
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(!actionData.participantes.includes(interaction.user.id)),
+                    .setDisabled(!actionData.participantes.includes(interaction.user.id) && !actionData.reservas.includes(interaction.user.id)),
                 new ButtonBuilder()
                     .setCustomId(`Finalizar_${actionId}`)
                     .setLabel('🏆 Finalizar')
@@ -270,12 +272,13 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                 new ButtonBuilder()
                     .setCustomId(`Participar_${actionId}`)
                     .setLabel('✅ Participar')
-                    .setStyle(ButtonStyle.Success),
+                    .setStyle(ButtonStyle.Success)
+                    .setDisabled(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id)),
                 new ButtonBuilder()
                     .setCustomId(`Retirar_${actionId}`)
                     .setLabel('❌ Se Retirar')
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(!actionData.participantes.includes(interaction.user.id)),
+                    .setDisabled(!actionData.participantes.includes(interaction.user.id) && !actionData.reservas.includes(interaction.user.id)),
                 new ButtonBuilder()
                     .setCustomId(`Finalizar_${actionId}`)
                     .setLabel('🏆 Finalizar')
