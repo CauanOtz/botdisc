@@ -152,6 +152,49 @@ client.on('interactionCreate', async (interaction) => {
             actionData.reservas.push(interaction.user.id);
             await interaction.reply({content: 'Você foi adicionado a lista de reservas.', ephemeral: true});
         }
+
+        // Formatando a lista de participantes com números
+        const participantesList = actionData.participantes.length > 0 
+            ? actionData.participantes.map((id, index) => `${index + 1}. <@${id}>`).join('\n')
+            : '*Nenhum participante ainda*';
+
+        // Formatando a lista de reservas com números
+        const reservasList = actionData.reservas.length > 0
+            ? actionData.reservas.map((id, index) => `${index + 1}. <@${id}>`).join('\n')
+            : '*Nenhuma reserva ainda*';
+
+        const buttons = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`Participar_${actionId}`)
+                    .setLabel(actionData.participantes.includes(interaction.user.id) ? '❌ Se Retirar' : '✅ Participar')
+                    .setStyle(actionData.participantes.includes(interaction.user.id) ? ButtonStyle.Danger : ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`Cancelar_${actionId}`)
+                    .setLabel('❌ Cancelar')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        await interaction.message.edit({
+            embeds: [{
+                color: 0x0099FF,
+                title: `🎮 ${actionData.name}`,
+                description: `
+📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
+
+👥 **Vagas:** ${actionData.participantes.length}/${actionData.vagas}
+🗡️ **Arma do baú:** ${actionData.pegouArma ? 'Sim' : 'Não'}
+
+**Participantes:**
+${participantesList}
+
+${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
+                footer: {
+                    text: 'Use os botões abaixo para participar ou se retirar da ação!'
+                }
+            }],
+            components: [buttons]
+        });
     }
 
     if(action === 'Cancelar'){
