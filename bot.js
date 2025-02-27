@@ -149,7 +149,6 @@ client.on('interactionCreate', async (interaction) => {
 
             await interaction.showModal(quantidadeModal);
         } else {
-            // Criar ação sem armas
             const actionId = Date.now();
             actions[actionId] = {
                 name: tempData.name,
@@ -174,11 +173,14 @@ client.on('interactionCreate', async (interaction) => {
                         .setStyle(ButtonStyle.Danger)
                 );
 
+            // Primeiro, atualizamos a mensagem do select
             await interaction.update({ 
                 components: [], 
                 content: 'Ação criada com sucesso!', 
-                flags: 1 << 6
+                flags: 1 << 6 
             });
+
+            // Depois, enviamos a nova mensagem com o embed
             await interaction.channel.send({
                 embeds: [{
                     color: 0x0099FF,
