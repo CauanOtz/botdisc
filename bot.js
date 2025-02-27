@@ -251,26 +251,48 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
         const newIsUserInAction = actionData.participantes.includes(interaction.user.id) || 
                                 actionData.reservas.includes(interaction.user.id);
 
-        // Responde ao usuário
-        await interaction.reply({
-            content: newIsUserInAction ? 'Você está participando desta ação!' : 'Você não está participando desta ação.',
-            ephemeral: true,
-            components: [new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`Participar_${actionId}`)
-                        .setLabel(newIsUserInAction ? '❌ Se Retirar' : '✅ Participar')
-                        .setStyle(newIsUserInAction ? ButtonStyle.Danger : ButtonStyle.Success),
-                    new ButtonBuilder()
-                        .setCustomId(`Finalizar_${actionId}`)
-                        .setLabel('🏆 Finalizar')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId(`Cancelar_${actionId}`)
-                        .setLabel('🚫 Cancelar Ação')
-                        .setStyle(ButtonStyle.Danger)
-                )]
-        });
+        // Se a interação veio de uma mensagem ephemeral (tem parentId), atualiza ela
+        if (interaction.message.flags.has('EPHEMERAL')) {
+            await interaction.update({
+                content: newIsUserInAction ? 'Você está participando desta ação!' : 'Você não está participando desta ação.',
+                components: [new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId(`Participar_${actionId}`)
+                            .setLabel(newIsUserInAction ? '❌ Se Retirar' : '✅ Participar')
+                            .setStyle(newIsUserInAction ? ButtonStyle.Danger : ButtonStyle.Success),
+                        new ButtonBuilder()
+                            .setCustomId(`Finalizar_${actionId}`)
+                            .setLabel('🏆 Finalizar')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId(`Cancelar_${actionId}`)
+                            .setLabel('🚫 Cancelar Ação')
+                            .setStyle(ButtonStyle.Danger)
+                    )]
+            });
+        } else {
+            // Se não, cria uma nova mensagem ephemeral
+            await interaction.reply({
+                content: newIsUserInAction ? 'Você está participando desta ação!' : 'Você não está participando desta ação.',
+                ephemeral: true,
+                components: [new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId(`Participar_${actionId}`)
+                            .setLabel(newIsUserInAction ? '❌ Se Retirar' : '✅ Participar')
+                            .setStyle(newIsUserInAction ? ButtonStyle.Danger : ButtonStyle.Success),
+                        new ButtonBuilder()
+                            .setCustomId(`Finalizar_${actionId}`)
+                            .setLabel('🏆 Finalizar')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId(`Cancelar_${actionId}`)
+                            .setLabel('🚫 Cancelar Ação')
+                            .setStyle(ButtonStyle.Danger)
+                    )]
+                })
+        }
     }
 
     if(action === 'Finalizar'){
