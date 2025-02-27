@@ -177,7 +177,10 @@ client.on('interactionCreate', async (interaction) => {
     });
 
     if(action === 'Participar'){
-        if(actionData.participantes.includes(interaction.user.id)){
+        const isParticipante = actionData.participantes.includes(interaction.user.id);
+        const isReserva = actionData.reservas.includes(interaction.user.id);
+
+        if(isParticipante || isReserva){
             actionData.participantes = actionData.participantes.filter(id => id !== interaction.user.id);
             actionData.reservas = actionData.reservas.filter(id => id !== interaction.user.id);
             await interaction.reply({content: 'Você foi removido da lista de participantes.', ephemeral: true});
@@ -203,14 +206,8 @@ client.on('interactionCreate', async (interaction) => {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId(`Participar_${actionId}`)
-                    .setLabel('✅ Participar')
-                    .setStyle(ButtonStyle.Success)
-                    .setDisabled(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id)),
-                new ButtonBuilder()
-                    .setCustomId(`Retirar_${actionId}`)
-                    .setLabel('❌ Se Retirar')
-                    .setStyle(ButtonStyle.Danger)
-                    .setDisabled(!actionData.participantes.includes(interaction.user.id) && !actionData.reservas.includes(interaction.user.id)),
+                    .setLabel(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? '❌ Se Retirar' : '✅ Participar')
+                    .setStyle(actionData.participantes.includes(interaction.user.id) || actionData.reservas.includes(interaction.user.id) ? ButtonStyle.Danger : ButtonStyle.Success),
                 new ButtonBuilder()
                     .setCustomId(`Finalizar_${actionId}`)
                     .setLabel('🏆 Finalizar')
@@ -221,7 +218,7 @@ client.on('interactionCreate', async (interaction) => {
                     .setStyle(ButtonStyle.Danger)
             );
 
-        await interaction.message.edit({
+        const messageContent = {
             embeds: [{
                 color: 0x0099FF,
                 title: `🎮 ${actionData.name}`,
@@ -239,6 +236,16 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
                     text: 'Use os botões abaixo para participar ou se retirar da ação!'
                 }
             }],
+            components: [buttons]
+        };
+
+        // Atualiza a mensagem para todos, mas mantém o estado do botão personalizado para cada usuário
+        await interaction.message.edit(messageContent);
+        
+        // Atualiza o botão especificamente para o usuário que interagiu
+        await interaction.followUp({
+            content: 'Botões atualizados!',
+            ephemeral: true,
             components: [buttons]
         });
     }
