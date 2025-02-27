@@ -255,22 +255,8 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
             content: currentIsUserInAction 
                 ? 'Você está participando desta ação!' 
                 : 'Você não está participando desta ação.',
-            ephemeral: false, // Alterado para false
-            components: [new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`${currentIsUserInAction ? 'Retirar' : 'Participar'}_${actionId}`)
-                        .setLabel(currentIsUserInAction ? '❌ Se Retirar' : '✅ Participar')
-                        .setStyle(currentIsUserInAction ? ButtonStyle.Danger : ButtonStyle.Success),
-                    new ButtonBuilder()
-                        .setCustomId(`Finalizar_${actionId}`)
-                        .setLabel('🏆 Finalizar')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId(`Cancelar_${actionId}`)
-                        .setLabel('🚫 Cancelar Ação')
-                        .setStyle(ButtonStyle.Danger)
-                )]
+            ephemeral: true, // Alterado para true
+            components: [] // Removido os botões duplicados
         });
     }
 
@@ -289,7 +275,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
         await interaction.reply({
             content: '⚔️ Qual foi o status da ação?',
             components: [select],
-            ephemeral: false // Alterado para false
+            ephemeral: true // Alterado para true
         });
     }
 
@@ -309,7 +295,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
         delete actions[actionId];
         await interaction.reply({
             content: 'Ação cancelada com sucesso!',
-            ephemeral: false // Alterado para false
+            ephemeral: true // Alterado para true
         });
     }
 });
@@ -345,7 +331,7 @@ client.on('interactionCreate', async (interaction) => {
     delete actions[actionId];
     await interaction.reply({
         content: 'Ação finalizada com sucesso!',
-        ephemeral: false // Alterado para false
+        ephemeral: true // Alterado para true
     });
 });
 
