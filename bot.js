@@ -92,8 +92,8 @@ client.on('interactionCreate', async (interaction) => {
 client.on('interactionCreate', async (interaction) => {
     if(!interaction.isSelectMenu()) return;
 
-    const [_, actionsId] = interaction.customId.split('_');
-    const actionData = actions[actionsId];
+    const [_, actionId] = interaction.customId.split('_');
+    const actionData = actions[actionId];
 
     if(!actionData) return interaction.reply({ content: 'Ação não encontrada.', ephemeral: true });
 
@@ -101,10 +101,10 @@ client.on('interactionCreate', async (interaction) => {
     const participantes = actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante';
 
     await interaction.channel.send({
-        content: `🎭 **Ação:** ${actionData.name}\n📅 **Data:** <t:${Math.floor(actionId / 1000)}:d>\n👥 **Participantes:** ${participantes}\n⚔️ **Status:** ${status === 'Vitória' ? '🏆 Vitória' : '❌ Derrota'}`
+        content: `🎭 **Ação:** ${actionData.name}\n📅 **Data:** <t:${Math.floor(actionId / 1000)}:d>\n👥 **Participantes:** ${participantes}\n⚔️ **Status:** ${status === 'vitoria' ? '🏆 Vitória' : '💀 Derrota'}`
     });
 
-    delete actions[actionsId];
+    delete actions[actionId];
 });
 
 client.login(process.env.TOKEN);
