@@ -68,10 +68,10 @@ client.on('interactionCreate', async (interaction) => {
 
         const armaInput = new TextInputBuilder()
             .setCustomId('arma_acao')
-            .setLabel('Foi pega arma do baú?')
+            .setLabel('Quantidade de armas pegas do baú')
             .setStyle(TextInputStyle.Short)
-            .setPlaceholder('Digite sim ou não')
-            .setRequired(true);
+            .setPlaceholder('Digite a quantidade (0 se não pegou)')
+            .setRequired(false);
 
         modal.addComponents(
             new ActionRowBuilder().addComponents(nomeInput),
@@ -89,8 +89,8 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.customId === 'modal_acao') {
         const actionName = interaction.fields.getTextInputValue('nome_acao');
         const vagas = parseInt(interaction.fields.getTextInputValue('vagas_acao'));
-        const armaResponse = interaction.fields.getTextInputValue('arma_acao').toLowerCase();
-
+        const quantidadeArmas = interaction.fields.getTextInputValue('arma_acao');
+        
         if(isNaN(vagas)) {
             return interaction.reply({ 
                 content: 'Número de vagas inválido!', 
@@ -98,119 +98,23 @@ client.on('interactionCreate', async (interaction) => {
             });
         }
 
-        const pegouArma = armaResponse === 'sim';
-
-        if (pegouArma) {
-            // Se pegou arma, pergunta a quantidade
-            tempActions.set(interaction.user.id, {
-                name: actionName,
-                vagas: vagas,
-                pegouArma: true
-            });
-
-            const quantidadeModal = new ModalBuilder()
-                .setCustomId('quantidade_armas_modal')
-                .setTitle('Quantidade de Armas');
-
-            const quantidadeInput = new TextInputBuilder()
-                .setCustomId('quantidade_armas')
-                .setLabel('Quantas armas foram pegas do baú?')
-                .setStyle(TextInputStyle.Short)
-                .setPlaceholder('Digite o número de armas')
-                .setRequired(true);
-
-            quantidadeModal.addComponents(
-                new ActionRowBuilder().addComponents(quantidadeInput)
-            );
-
-            await interaction.reply({ 
-                content: 'Por favor, informe a quantidade de armas.', 
-                flags: 1 << 6 
-            });
-            await interaction.showModal(quantidadeModal);
-        } else {
-            // Se não pegou arma, cria a ação diretamente
-            const actionId = Date.now();
-            actions[actionId] = {
-                name: actionName,
-                vagas: vagas,
-                pegouArma: false,
-                quantidadeArmas: 0,
-                participantes: [],
-                reservas: []
-            };
-
-            const buttons = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`Participar_${actionId}`)
-                        .setLabel('✅ Participar')
-                        .setStyle(ButtonStyle.Success),
-                    new ButtonBuilder()
-                        .setCustomId(`Cancelar_${actionId}`)
-                        .setLabel('❌ Cancelar')
-                        .setStyle(ButtonStyle.Danger)
-                );
-
-            await interaction.reply({ 
-                content: 'Ação criada com sucesso!', 
-                flags: 1 << 6 
-            });
-
-            await interaction.channel.send({
-                embeds: [{
-                    color: 0x0099FF,
-                    title: `🎮 ${actionName}`,
-                    description: `
-📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
-
-👥 **Vagas:** 0/${vagas}
-🗡️ **Arma do baú:** Não
-
-**Participantes:**
-*Nenhum participante ainda*`,
-                    footer: {
-                        text: 'Use os botões abaixo para participar ou se retirar da ação!'
-                    }
-                }],
-                components: [buttons]
-            });
-        }
-    }
-});
-
-// Tratando a quantidade de armas
-client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isModalSubmit()) return;
-
-    if (interaction.customId === 'quantidade_armas_modal') {
-        const tempData = tempActions.get(interaction.user.id);
-        if (!tempData) {
+        const armas = quantidadeArmas ? parseInt(quantidadeArmas) : 0;
+        if(isNaN(armas)) {
             return interaction.reply({ 
-                content: 'Erro: Sessão expirada. Por favor, crie a ação novamente.', 
-                flags: 1 << 6
-            });
-        }
-
-        const quantidade = parseInt(interaction.fields.getTextInputValue('quantidade_armas'));
-        if(isNaN(quantidade)) {
-            return interaction.reply({ 
-                content: 'Quantidade inválida!', 
-                flags: 1 << 6
+                content: 'Quantidade de armas inválida!', 
+                flags: 1 << 6 
             });
         }
 
         const actionId = Date.now();
         actions[actionId] = {
-            name: tempData.name,
-            vagas: tempData.vagas,
-            pegouArma: true,
-            quantidadeArmas: quantidade,
+            name: actionName,
+            vagas: vagas,
+            pegouArma: armas > 0,
+            quantidadeArmas: armas,
             participantes: [],
             reservas: []
         };
-
-        tempActions.delete(interaction.user.id);
 
         const buttons = new ActionRowBuilder()
             .addComponents(
@@ -226,17 +130,18 @@ client.on('interactionCreate', async (interaction) => {
 
         await interaction.reply({ 
             content: 'Ação criada com sucesso!', 
-            flags: 1 << 6
+            flags: 1 << 6 
         });
+
         await interaction.channel.send({
             embeds: [{
                 color: 0x0099FF,
-                title: `🎮 ${tempData.name}`,
+                title: `🎮 ${actionName}`,
                 description: `
 📅 **Data:** <t:${Math.floor(actionId / 1000)}:F>
 
-👥 **Vagas:** 0/${tempData.vagas}
-🗡️ **Arma do baú:** Sim (${quantidade} armas)
+👥 **Vagas:** 0/${vagas}
+🗡️ **Arma do baú:** ${armas > 0 ? `Sim (${armas} armas)` : 'Não'}
 
 **Participantes:**
 *Nenhum participante ainda*`,
@@ -335,7 +240,7 @@ ${actionData.reservas.length > 0 ? `**Reservas:**\n${reservasList}` : ''}`,
 });
 
 client.on('interactionCreate', async (interaction) => {
-    if(!interaction.isSelectMenu()) return;
+    if(!interaction.isStringSelectMenu()) return;
 
     const [_, actionId] = interaction.customId.split('_');
     const actionData = actions[actionId];
