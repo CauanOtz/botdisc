@@ -374,8 +374,15 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if(logChannelIlegal) {
+        const participantesFormatados = actionData.participantes
+            .map(id => `<@${id}> | ID`)  // Substitui o ID por placeholder, já que não temos acesso ao ID do personagem
+            .join('\n');
+
         await logChannelIlegal.send(
-            `Ação: ${actionData.name} Data: ${dataFormatada} Contingente: ${participantesSimples} Resultado: ${status === 'vitoria' ? 'Vitória' : 'Derrota'}`
+`Ação: ${actionData.name}
+Data: ${dataFormatada}
+Contingente: ${participantesFormatados}
+Resultado: ${status === 'vitoria' ? 'Vitória' : 'Derrota'}`
         );
     }
 
