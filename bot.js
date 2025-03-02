@@ -343,12 +343,19 @@ client.on('interactionCreate', async (interaction) => {
 
     const status = interaction.values[0];
     const participantes = actionData.participantes.map(id => `<@${id}>`).join('\n') || 'Nenhum participante';
+    const participantesSimples = actionData.participantes.map(id => `<@${id}>`).join(' ');
     const armasInfo = actionData.quantidadeArmas > 0 
         ? `Sim (${actionData.quantidadeArmas} armas)` 
         : 'Não';
 
+    // Data formatada
+    const data = new Date(parseInt(actionId));
+    const dataFormatada = `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}/${data.getFullYear().toString().slice(-2)}`;
+
     // Envia o resultado em um canal separado
     const logChannel = interaction.guild.channels.cache.find(c => c.name === '📁⠂𝖱𝖾𝗅𝖺𝗍𝗈́𝗋𝗂𝗈𝗌');
+    const logChannelIlegal = interaction.guild.channels.cache.find(c => c.name === '📁⠂𝖱𝖾𝗅𝖺𝗍𝗈́𝗋𝗂𝗈𝗌-ilegal');
+
     if(logChannel) {
         await logChannel.send({
             embeds: [{
@@ -364,6 +371,12 @@ client.on('interactionCreate', async (interaction) => {
                 ]
             }]
         });
+    }
+
+    if(logChannelIlegal) {
+        await logChannelIlegal.send(
+            `Ação: ${actionData.name} Data: ${dataFormatada} Contingente: ${participantesSimples} Resultado: ${status === 'vitoria' ? 'Vitória' : 'Derrota'}`
+        );
     }
 
     delete actions[actionId];
